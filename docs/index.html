@@ -1,147 +1,215 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Codespace Control</title>
 <style>
-body{
-  font-family:Arial,sans-serif;
-  background:#111827;
-  color:white;
-  text-align:center;
-  padding:30px 15px;
-}
-.box{
-  max-width:420px;
-  margin:auto;
-  background:#1f2937;
-  padding:25px;
-  border-radius:20px;
-}
+body{font-family:Arial;background:#111827;color:white;text-align:center;padding:30px 15px}
+.box{max-width:420px;margin:auto;background:#1f2937;padding:25px;border-radius:20px}
 h1{font-size:25px}
-input{
-  width:100%;
-  box-sizing:border-box;
-  padding:14px;
-  margin:8px 0;
-  border-radius:10px;
-  border:1px solid #4b5563;
-  background:#111827;
-  color:white;
-  font-size:16px;
-}
-button{
-  width:100%;
-  padding:16px;
-  margin-top:12px;
-  border:0;
-  border-radius:12px;
-  font-size:18px;
-  font-weight:bold;
-}
-.start{background:#22c55e;color:#052e16}
-.stop{background:#ef4444;color:white}
-.status{background:#374151;color:white}
-#result{
-  margin-top:20px;
-  font-size:18px;
-  min-height:25px;
-}
+input{width:100%;box-sizing:border-box;padding:14px;margin:8px 0;border-radius:10px;border:1px solid #4b5563;background:#111827;color:white;font-size:16px}
+button{width:100%;padding:16px;margin-top:12px;border:0;border-radius:12px;font-size:18px;font-weight:bold}
+.start{background:#22c55e;color:#052e16}.stop{background:#ef4444;color:white}.status{background:#374151;color:white}
+#result{margin-top:20px;font-size:18px}
 </style>
 </head>
 <body>
-
 <div class="box">
 <h1>Codespace Control</h1>
-
 <input id="token" type="password" placeholder="GitHub Token">
-<input id="codespace" value="YOUR_CODESPACE_NAME">
-
+<input id="codespace" placeholder="Codespace Name">
 <button class="start" onclick="control('start')">START</button>
 <button class="stop" onclick="control('stop')">STOP</button>
 <button class="status" onclick="statusCheck()">CHECK STATUS</button>
-
 <div id="result">Ready</div>
+</div>
+<script>
+const API="https://api.github.com/user/codespaces/";
+function headers(){return{"Accept":"application/vnd.github+json","Authorization":"Bearer "+document.getElementById("token").value.trim(),"X-GitHub-Api-Version":"2026-03-10"}}
+function name(){return document.getElementById("codespace").value.trim()}
+async function control(action){
+ const token=document.getElementById("token").value.trim
+mkdir -p docs
+
+cat > docs/index.html <<'EOF'
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Codespace Control</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0f172a;color:#f8fafc;font-family:Arial,sans-serif;padding:24px}
+.box{max-width:430px;margin:20px auto;background:#1e293b;border-radius:22px;padding:22px}
+h1{text-align:center;margin:0 0 22px;font-size:25px}
+label{display:block;margin:14px 0 7px;color:#cbd5e1;font-size:14px}
+input,select{width:100%;padding:14px;border-radius:12px;border:1px solid #475569;background:#0f172a;color:white;font-size:16px}
+button{width:100%;padding:16px;margin-top:12px;border:0;border-radius:12px;font-size:18px;font-weight:bold}
+.start{background:#22c55e;color:#052e16}
+.stop{background:#ef4444;color:white}
+.status{background:#334155;color:white}
+#msg{text-align:center;margin-top:18px;min-height:24px;color:#cbd5e1}
+.small{text-align:center;color:#94a3b8;font-size:12px;margin-top:15px}
+</style>
+</head>
+<body>
+<div class="box">
+<h1>Codespace Control</h1>
+
+<label>GitHub Token</label>
+<input id="token" type="password" placeholder="Paste your GitHub token">
+
+<button class="status" id="load">LOAD CODESPACES</button>
+
+<label>Codespace</label>
+<select id="codespace" disabled>
+<option value="">Load first</option>
+</select>
+
+<button class="start" id="start" disabled>START</button>
+<button class="stop" id="stop" disabled>STOP</button>
+<button class="status" id="check" disabled>CHECK STATUS</button>
+
+<div id="msg">Ready</div>
+<div class="small">Token is kept only in this browser tab.</div>
 </div>
 
 <script>
-const API="https://api.github.com/user/codespaces/";
+const API="https://api.github.com";
+const token=document.getElementById("token");
+const list=document.getElementById("codespace");
+const msg=document.getElementById("msg");
+const start=document.getElementById("start");
+const stop=document.getElementById("stop");
+const check=document.getElementById("check");
+const load=document.getElementById("load");
 
 function headers(){
-  return {
-    "Accept":"application/vnd.github+json",
-    "Authorization":"Bearer "+document.getElementById("token").value.trim(),
-    "X-GitHub-Api-Version":"2026-03-10"
-  };
+ return {
+  "Accept":"application/vnd.github+json",
+  "Authorization":"Bearer "+token.value.trim(),
+  "X-GitHub-Api-Version":"2026-03-10"
+ };
 }
 
-function name(){
-  return document.getElementById("codespace").value.trim();
+function selected(){
+ return list.value;
 }
 
-async function control(action){
-  const token=document.getElementById("token").value.trim();
-  const cs=name();
-
-  if(!token || !cs || cs==="YOUR_CODESPACE_NAME"){
-    document.getElementById("result").textContent="Enter Token and Codespace name";
-    return;
-  }
-
-  document.getElementById("result").textContent=
-    action==="start" ? "Starting..." : "Stopping...";
-
-  try{
-    const r=await fetch(API+encodeURIComponent(cs)+"/"+action,{
-      method:"POST",
-      headers:headers()
-    });
-
-    if(r.ok){
-      document.getElementById("result").textContent=
-        action==="start" ? "START command sent" : "STOP command sent";
-      setTimeout(statusCheck,4000);
-    }else{
-      const t=await r.text();
-      document.getElementById("result").textContent=
-        "Error "+r.status;
-      console.log(t);
-    }
-  }catch(e){
-    document.getElementById("result").textContent="Connection error";
-  }
+async function api(path,options={}){
+ return fetch(API+path,{
+  ...options,
+  headers:{...headers(),...(options.headers||{})}
+ });
 }
 
-async function statusCheck(){
-  const token=document.getElementById("token").value.trim();
-  const cs=name();
-
-  if(!token || !cs || cs==="YOUR_CODESPACE_NAME"){
-    document.getElementById("result").textContent="Enter Token and Codespace name";
-    return;
-  }
-
-  document.getElementById("result").textContent="Checking...";
-
-  try{
-    const r=await fetch(API+encodeURIComponent(cs),{
-      headers:headers()
-    });
-
-    if(!r.ok){
-      document.getElementById("result").textContent="Error "+r.status;
-      return;
-    }
-
-    const data=await r.json();
-
-    document.getElementById("result").textContent=
-      "STATUS: "+data.state;
-  }catch(e){
-    document.getElementById("result").textContent="Connection error";
-  }
+function enableButtons(on){
+ start.disabled=!on;
+ stop.disabled=!on;
+ check.disabled=!on;
 }
+
+load.onclick=async()=>{
+ if(!token.value.trim()){
+  msg.textContent="Paste GitHub Token first";
+  return;
+ }
+
+ msg.textContent="Loading...";
+ load.disabled=true;
+
+ try{
+  const r=await api("/user/codespaces");
+
+  if(!r.ok){
+   msg.textContent="Token error: HTTP "+r.status;
+   load.disabled=false;
+   return;
+  }
+
+  const data=await r.json();
+  list.innerHTML="";
+
+  if(!data.codespaces || data.codespaces.length===0){
+   list.innerHTML='<option value="">No Codespaces found</option>';
+   msg.textContent="No Codespaces found";
+   load.disabled=false;
+   return;
+  }
+
+  data.codespaces.forEach(c=>{
+   const o=document.createElement("option");
+   o.value=c.name;
+   o.textContent=c.display_name+" — "+c.state;
+   list.appendChild(o);
+  });
+
+  list.disabled=false;
+  enableButtons(true);
+  msg.textContent="Codespaces loaded";
+ }catch(e){
+  msg.textContent="Connection error";
+ }
+
+ load.disabled=false;
+};
+
+async function command(action){
+ const cs=selected();
+
+ if(!cs){
+  msg.textContent="Select a Codespace";
+  return;
+ }
+
+ msg.textContent=action==="start"?"Starting...":"Stopping...";
+
+ try{
+  const r=await api("/user/codespaces/"+encodeURIComponent(cs)+"/"+action,{
+   method:"POST"
+  });
+
+  if(r.ok){
+   msg.textContent=action==="start"?"START command sent":"STOP command sent";
+   setTimeout(checkStatus,3000);
+  }else{
+   msg.textContent="Error: HTTP "+r.status;
+  }
+ }catch(e){
+  msg.textContent="Connection error";
+ }
+}
+
+async function checkStatus(){
+ const cs=selected();
+
+ if(!cs){
+  msg.textContent="Select a Codespace";
+  return;
+ }
+
+ msg.textContent="Checking...";
+
+ try{
+  const r=await api("/user/codespaces/"+encodeURIComponent(cs));
+
+  if(!r.ok){
+   msg.textContent="Error: HTTP "+r.status;
+   return;
+  }
+
+  const d=await r.json();
+  msg.textContent="STATUS: "+d.state;
+ }catch(e){
+  msg.textContent="Connection error";
+ }
+}
+
+start.onclick=()=>command("start");
+stop.onclick=()=>command("stop");
+check.onclick=checkStatus;
 </script>
-
 </body>
 </html>
