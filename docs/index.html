@@ -1,15 +1,147 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Vinbull Gold Trade Observer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Codespace Control</title>
+<style>
+body{
+  font-family:Arial,sans-serif;
+  background:#111827;
+  color:white;
+  text-align:center;
+  padding:30px 15px;
+}
+.box{
+  max-width:420px;
+  margin:auto;
+  background:#1f2937;
+  padding:25px;
+  border-radius:20px;
+}
+h1{font-size:25px}
+input{
+  width:100%;
+  box-sizing:border-box;
+  padding:14px;
+  margin:8px 0;
+  border-radius:10px;
+  border:1px solid #4b5563;
+  background:#111827;
+  color:white;
+  font-size:16px;
+}
+button{
+  width:100%;
+  padding:16px;
+  margin-top:12px;
+  border:0;
+  border-radius:12px;
+  font-size:18px;
+  font-weight:bold;
+}
+.start{background:#22c55e;color:#052e16}
+.stop{background:#ef4444;color:white}
+.status{background:#374151;color:white}
+#result{
+  margin-top:20px;
+  font-size:18px;
+  min-height:25px;
+}
+</style>
 </head>
-<body style="background:#111;color:#fff;font-family:Arial;text-align:center;padding:40px">
-<h2>VINBULL GOLD TRADE OBSERVER</h2>
-<p>Dashboard connecting...</p>
+<body>
+
+<div class="box">
+<h1>Codespace Control</h1>
+
+<input id="token" type="password" placeholder="GitHub Token">
+<input id="codespace" value="YOUR_CODESPACE_NAME">
+
+<button class="start" onclick="control('start')">START</button>
+<button class="stop" onclick="control('stop')">STOP</button>
+<button class="status" onclick="statusCheck()">CHECK STATUS</button>
+
+<div id="result">Ready</div>
+</div>
+
 <script>
-location.href="https://effective-train-4g7q445r6465fj699-8000.app.github.dev/";
+const API="https://api.github.com/user/codespaces/";
+
+function headers(){
+  return {
+    "Accept":"application/vnd.github+json",
+    "Authorization":"Bearer "+document.getElementById("token").value.trim(),
+    "X-GitHub-Api-Version":"2026-03-10"
+  };
+}
+
+function name(){
+  return document.getElementById("codespace").value.trim();
+}
+
+async function control(action){
+  const token=document.getElementById("token").value.trim();
+  const cs=name();
+
+  if(!token || !cs || cs==="YOUR_CODESPACE_NAME"){
+    document.getElementById("result").textContent="Enter Token and Codespace name";
+    return;
+  }
+
+  document.getElementById("result").textContent=
+    action==="start" ? "Starting..." : "Stopping...";
+
+  try{
+    const r=await fetch(API+encodeURIComponent(cs)+"/"+action,{
+      method:"POST",
+      headers:headers()
+    });
+
+    if(r.ok){
+      document.getElementById("result").textContent=
+        action==="start" ? "START command sent" : "STOP command sent";
+      setTimeout(statusCheck,4000);
+    }else{
+      const t=await r.text();
+      document.getElementById("result").textContent=
+        "Error "+r.status;
+      console.log(t);
+    }
+  }catch(e){
+    document.getElementById("result").textContent="Connection error";
+  }
+}
+
+async function statusCheck(){
+  const token=document.getElementById("token").value.trim();
+  const cs=name();
+
+  if(!token || !cs || cs==="YOUR_CODESPACE_NAME"){
+    document.getElementById("result").textContent="Enter Token and Codespace name";
+    return;
+  }
+
+  document.getElementById("result").textContent="Checking...";
+
+  try{
+    const r=await fetch(API+encodeURIComponent(cs),{
+      headers:headers()
+    });
+
+    if(!r.ok){
+      document.getElementById("result").textContent="Error "+r.status;
+      return;
+    }
+
+    const data=await r.json();
+
+    document.getElementById("result").textContent=
+      "STATUS: "+data.state;
+  }catch(e){
+    document.getElementById("result").textContent="Connection error";
+  }
+}
 </script>
+
 </body>
 </html>
