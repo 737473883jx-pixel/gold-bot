@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Codespace Control</title>
+
+<title>Gold Bot Control</title>
 
 <style>
+
 *{
   box-sizing:border-box;
 }
@@ -33,36 +35,50 @@ body{
 
 h1{
   text-align:center;
-  font-size:24px;
-  margin:0 0 22px;
+  margin:0 0 25px;
+  font-size:25px;
 }
 
-.status-box{
+.connection{
   text-align:center;
-  padding:18px;
-  border-radius:12px;
   background:#0f172a;
-  margin-bottom:18px;
-  font-size:18px;
+  border-radius:14px;
+  padding:20px;
+  margin-bottom:20px;
 }
 
-#statusText{
+.connection-title{
+  font-size:14px;
+  color:#94a3b8;
+  margin-bottom:8px;
+}
+
+#connectionText{
+  font-size:25px;
+  font-weight:bold;
+}
+
+.result{
+  text-align:center;
+  min-height:35px;
+  margin:15px 0;
+  font-size:17px;
   font-weight:bold;
 }
 
 button{
   width:100%;
-  padding:16px;
+  padding:17px;
   margin-top:12px;
   border:0;
   border-radius:12px;
-  font-size:18px;
+  font-size:19px;
   font-weight:bold;
   cursor:pointer;
 }
 
 button:disabled{
-  opacity:.55;
+  opacity:.5;
   cursor:not-allowed;
 }
 
@@ -76,16 +92,12 @@ button:disabled{
   color:white;
 }
 
-.message{
-  text-align:center;
-  margin-top:18px;
-  min-height:28px;
-  font-size:16px;
-  font-weight:bold;
+.connected{
+  color:#22c55e;
 }
 
-.success{
-  color:#22c55e;
+.disconnected{
+  color:#ef4444;
 }
 
 .working{
@@ -95,6 +107,7 @@ button:disabled{
 .error{
   color:#ef4444;
 }
+
 </style>
 </head>
 
@@ -102,23 +115,35 @@ button:disabled{
 
 <div class="box">
 
-<h1>Codespace Control</h1>
+<h1>Gold Bot Control</h1>
 
-<div class="status-box">
-  STATUS:
-  <span id="statusText">CHECKING...</span>
+<div class="connection">
+
+  <div class="connection-title">
+    CONNECTION
+  </div>
+
+  <div id="connectionText" class="disconnected">
+    DISCONNECTED
+  </div>
+
 </div>
 
-<button class="start" id="startBtn">
+<button
+  class="start"
+  id="startBtn">
   START
 </button>
 
-<button class="stop" id="stopBtn">
+<button
+  class="stop"
+  id="stopBtn">
   STOP
 </button>
 
-<div class="message" id="message">
-  অবস্থা পরীক্ষা করা হচ্ছে...
+<div
+  id="result"
+  class="result">
 </div>
 
 </div>
@@ -134,77 +159,91 @@ document.getElementById("startBtn");
 const stopBtn =
 document.getElementById("stopBtn");
 
-const statusText =
-document.getElementById("statusText");
+const connectionText =
+document.getElementById("connectionText");
 
-const message =
-document.getElementById("message");
+const result =
+document.getElementById("result");
 
 
-function setStatus(state){
+function setConnection(state){
 
   const value =
   String(state || "").toUpperCase();
 
-  if(value === "RUNNING"){
+  if(
+    value === "RUNNING"
+  ){
 
-    statusText.textContent =
-    "RUNNING";
+    connectionText.textContent =
+    "CONNECTED ✓";
 
-    statusText.style.color =
-    "#22c55e";
+    connectionText.className =
+    "connected";
 
   }
 
   else if(
-    value === "STOPPED" ||
     value === "SHUTDOWN" ||
+    value === "STOPPED" ||
     value === "OFF"
   ){
 
-    statusText.textContent =
-    "STOPPED";
+    connectionText.textContent =
+    "DISCONNECTED";
 
-    statusText.style.color =
-    "#ef4444";
+    connectionText.className =
+    "disconnected";
 
   }
 
   else if(
-    value === "STARTING" ||
+    value === "STARTING"
+  ){
+
+    connectionText.textContent =
+    "CONNECTING...";
+
+    connectionText.className =
+    "working";
+
+  }
+
+  else if(
     value === "STOPPING"
   ){
 
-    statusText.textContent =
-    value;
+    connectionText.textContent =
+    "DISCONNECTING...";
 
-    statusText.style.color =
-    "#fbbf24";
+    connectionText.className =
+    "working";
 
   }
 
   else{
 
-    statusText.textContent =
-    value || "UNKNOWN";
+    connectionText.textContent =
+    "UNKNOWN";
 
-    statusText.style.color =
-    "#fbbf24";
+    connectionText.className =
+    "working";
   }
+
 }
 
 
-function showMessage(text,type){
+function showResult(text,type){
 
-  message.textContent =
+  result.textContent =
   text;
 
-  message.className =
-  "message " + type;
+  result.className =
+  "result " + type;
 }
 
 
-async function fetchStatus(){
+async function getStatus(){
 
   try{
 
@@ -225,75 +264,21 @@ async function fetchStatus(){
       data.ok === false
     ){
 
-      setStatus("UNKNOWN");
-
-      showMessage(
-        data.error ||
-        "স্ট্যাটাস পাওয়া যাচ্ছে না",
-        "error"
-      );
+      setConnection("UNKNOWN");
 
       return;
     }
 
-    setStatus(data.state);
-
-    const state =
-    String(
-      data.state || ""
-    ).toUpperCase();
-
-    if(state === "RUNNING"){
-
-      showMessage(
-        "চালু হয়েছে ✓",
-        "success"
-      );
-
-    }
-
-    else if(
-      state === "SHUTDOWN" ||
-      state === "STOPPED" ||
-      state === "OFF"
-    ){
-
-      showMessage(
-        "স্টপ হয়ে গেছে ✓",
-        "success"
-      );
-
-    }
-
-    else if(state === "STARTING"){
-
-      showMessage(
-        "চালু হচ্ছে...",
-        "working"
-      );
-
-    }
-
-    else if(state === "STOPPING"){
-
-      showMessage(
-        "বন্ধ হচ্ছে...",
-        "working"
-      );
-
-    }
+    setConnection(data.state);
 
   }
 
   catch(error){
 
-    setStatus("UNKNOWN");
+    setConnection("UNKNOWN");
 
-    showMessage(
-      "Worker-এর সাথে সংযোগ হচ্ছে না",
-      "error"
-    );
   }
+
 }
 
 
@@ -308,23 +293,24 @@ async function control(action){
 
   if(action === "start"){
 
-    showMessage(
-      "চালু করার অনুরোধ পাঠানো হয়েছে... চালু হচ্ছে...",
+    setConnection("STARTING");
+
+    showResult(
+      "CONNECTING... চালু হচ্ছে",
       "working"
     );
-
-    setStatus("STARTING");
 
   }
 
   else{
 
-    showMessage(
-      "বন্ধ করার অনুরোধ পাঠানো হয়েছে... বন্ধ হচ্ছে...",
+    setConnection("STOPPING");
+
+    showResult(
+      "DISCONNECTING... বন্ধ হচ্ছে",
       "working"
     );
 
-    setStatus("STOPPING");
   }
 
 
@@ -347,61 +333,71 @@ async function control(action){
       data.ok === false
     ){
 
-      showMessage(
-        data.error ||
-        "কাজটি করা যায়নি",
+      showResult(
+        action === "start"
+        ? "CONNECT FAILED ✕"
+        : "DISCONNECT FAILED ✕",
         "error"
       );
 
-      await fetchStatus();
+      await getStatus();
+
+      startBtn.disabled =
+      false;
+
+      stopBtn.disabled =
+      false;
 
       return;
     }
 
 
-    if(action === "start"){
-
-      showMessage(
-        "চালু হচ্ছে... একটু অপেক্ষা করো",
-        "working"
-      );
-
-    }
-
-    else{
-
-      showMessage(
-        "বন্ধ হচ্ছে... একটু অপেক্ষা করো",
-        "working"
-      );
-    }
-
-
     /*
-      Codespace পুরোপুরি চালু/বন্ধ হওয়া
-      পর্যন্ত বারবার স্ট্যাটাস পরীক্ষা করবে।
+      GitHub Codespace চালু/বন্ধ হওয়া
+      পর্যন্ত প্রতি 3 সেকেন্ডে পরীক্ষা করবে।
     */
 
     let attempts = 0;
 
-    const check = async () => {
+
+    async function waitForFinalState(){
 
       attempts++;
 
-      await fetchStatus();
+      const response =
+      await fetch(
+        WORKER_URL + "/status",
+        {
+          method:"GET",
+          cache:"no-store"
+        }
+      );
+
+      const data =
+      await response.json();
 
 
-      const current =
-      statusText.textContent;
+      if(
+        response.ok &&
+        data.ok
+      ){
+
+        const state =
+        String(
+          data.state || ""
+        ).toUpperCase();
 
 
-      if(action === "start"){
+        if(
+          action === "start" &&
+          state === "RUNNING"
+        ){
 
-        if(current === "RUNNING"){
+          setConnection("RUNNING");
 
-          showMessage(
-            "চালু হয়েছে ✓",
-            "success"
+          showResult(
+            "CONNECTED ✓  চালু হয়েছে",
+            "connected"
           );
 
           startBtn.disabled =
@@ -413,15 +409,21 @@ async function control(action){
           return;
         }
 
-      }
 
-      else{
+        if(
+          action === "stop" &&
+          (
+            state === "SHUTDOWN" ||
+            state === "STOPPED" ||
+            state === "OFF"
+          )
+        ){
 
-        if(current === "STOPPED"){
+          setConnection("STOPPED");
 
-          showMessage(
-            "স্টপ হয়ে গেছে ✓",
-            "success"
+          showResult(
+            "DISCONNECTED ✓  স্টপ হয়ে গেছে",
+            "disconnected"
           );
 
           startBtn.disabled =
@@ -432,13 +434,17 @@ async function control(action){
 
           return;
         }
+
+
+        setConnection(state);
+
       }
 
 
       if(attempts < 20){
 
         setTimeout(
-          check,
+          waitForFinalState,
           3000
         );
 
@@ -446,10 +452,10 @@ async function control(action){
 
       else{
 
-        showMessage(
+        showResult(
           action === "start"
-          ? "চালু হতে বেশি সময় লাগছে। আবার STATUS দেখছি..."
-          : "বন্ধ হতে বেশি সময় লাগছে। আবার STATUS দেখছি...",
+          ? "চালু হতে একটু বেশি সময় লাগছে..."
+          : "বন্ধ হতে একটু বেশি সময় লাগছে...",
           "working"
         );
 
@@ -458,30 +464,29 @@ async function control(action){
 
         stopBtn.disabled =
         false;
-
-        setTimeout(
-          fetchStatus,
-          5000
-        );
       }
-    };
+
+    }
 
 
     setTimeout(
-      check,
+      waitForFinalState,
       3000
     );
+
 
   }
 
   catch(error){
 
-    showMessage(
-      "Worker-এর সাথে সংযোগ হচ্ছে না",
+    showResult(
+      action === "start"
+      ? "CONNECT FAILED ✕"
+      : "DISCONNECT FAILED ✕",
       "error"
     );
 
-    await fetchStatus();
+    await getStatus();
 
     startBtn.disabled =
     false;
@@ -489,6 +494,7 @@ async function control(action){
     stopBtn.disabled =
     false;
   }
+
 }
 
 
@@ -504,11 +510,19 @@ stopBtn.addEventListener(
 );
 
 
-fetchStatus();
+/*
+  Page খুললেই বর্তমান অবস্থা দেখাবে।
+*/
 
+getStatus();
+
+
+/*
+  প্রতি 10 সেকেন্ডে অবস্থা আপডেট করবে।
+*/
 
 setInterval(
-  fetchStatus,
+  getStatus,
   10000
 );
 
