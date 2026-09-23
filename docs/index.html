@@ -6,82 +6,94 @@
 <title>Codespace Control</title>
 
 <style>
-* {
-  box-sizing: border-box;
+*{
+  box-sizing:border-box;
 }
 
-body {
-  margin: 0;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #0f172a;
-  color: #f8fafc;
-  font-family: Arial, sans-serif;
-  padding: 20px;
+body{
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#0f172a;
+  color:#f8fafc;
+  font-family:Arial,sans-serif;
+  padding:20px;
 }
 
-.box {
-  width: 100%;
-  max-width: 380px;
-  background: #1e293b;
-  padding: 25px;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+.box{
+  width:100%;
+  max-width:380px;
+  background:#1e293b;
+  padding:25px;
+  border-radius:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,.35);
 }
 
-h1 {
-  text-align: center;
-  font-size: 24px;
-  margin: 0 0 22px;
+h1{
+  text-align:center;
+  font-size:24px;
+  margin:0 0 22px;
 }
 
-.status-box {
-  text-align: center;
-  padding: 15px;
-  border-radius: 12px;
-  background: #0f172a;
-  margin-bottom: 18px;
-  font-size: 18px;
+.status-box{
+  text-align:center;
+  padding:18px;
+  border-radius:12px;
+  background:#0f172a;
+  margin-bottom:18px;
+  font-size:18px;
 }
 
-#statusText {
-  font-weight: bold;
+#statusText{
+  font-weight:bold;
 }
 
-button {
-  width: 100%;
-  padding: 16px;
-  margin-top: 12px;
-  border: 0;
-  border-radius: 12px;
-  font-size: 18px;
-  font-weight: bold;
-  cursor: pointer;
+button{
+  width:100%;
+  padding:16px;
+  margin-top:12px;
+  border:0;
+  border-radius:12px;
+  font-size:18px;
+  font-weight:bold;
+  cursor:pointer;
 }
 
-button:disabled {
-  opacity: .55;
-  cursor: not-allowed;
+button:disabled{
+  opacity:.55;
+  cursor:not-allowed;
 }
 
-.start {
-  background: #22c55e;
-  color: #052e16;
+.start{
+  background:#22c55e;
+  color:#052e16;
 }
 
-.stop {
-  background: #ef4444;
-  color: white;
+.stop{
+  background:#ef4444;
+  color:white;
 }
 
-.message {
-  text-align: center;
-  margin-top: 16px;
-  min-height: 22px;
-  color: #cbd5e1;
-  font-size: 14px;
+.message{
+  text-align:center;
+  margin-top:18px;
+  min-height:28px;
+  font-size:16px;
+  font-weight:bold;
+}
+
+.success{
+  color:#22c55e;
+}
+
+.working{
+  color:#fbbf24;
+}
+
+.error{
+  color:#ef4444;
 }
 </style>
 </head>
@@ -90,22 +102,24 @@ button:disabled {
 
 <div class="box">
 
-  <h1>Codespace Control</h1>
+<h1>Codespace Control</h1>
 
-  <div class="status-box">
-    STATUS:
-    <span id="statusText">CHECKING...</span>
-  </div>
+<div class="status-box">
+  STATUS:
+  <span id="statusText">CHECKING...</span>
+</div>
 
-  <button class="start" id="startBtn">
-    START
-  </button>
+<button class="start" id="startBtn">
+  START
+</button>
 
-  <button class="stop" id="stopBtn">
-    STOP
-  </button>
+<button class="stop" id="stopBtn">
+  STOP
+</button>
 
-  <div class="message" id="message"></div>
+<div class="message" id="message">
+  অবস্থা পরীক্ষা করা হচ্ছে...
+</div>
 
 </div>
 
@@ -127,111 +141,200 @@ const message =
 document.getElementById("message");
 
 
-function setStatus(state) {
+function setStatus(state){
 
   const value =
   String(state || "").toUpperCase();
 
-  if (value === "RUNNING") {
+  if(value === "RUNNING"){
 
-    statusText.textContent = "RUNNING";
-    statusText.style.color = "#22c55e";
+    statusText.textContent =
+    "RUNNING";
 
-  } else if (
+    statusText.style.color =
+    "#22c55e";
+
+  }
+
+  else if(
     value === "STOPPED" ||
     value === "SHUTDOWN" ||
     value === "OFF"
-  ) {
+  ){
 
-    statusText.textContent = "STOPPED";
-    statusText.style.color = "#ef4444";
+    statusText.textContent =
+    "STOPPED";
 
-  } else if (
+    statusText.style.color =
+    "#ef4444";
+
+  }
+
+  else if(
     value === "STARTING" ||
     value === "STOPPING"
-  ) {
+  ){
 
-    statusText.textContent = value;
-    statusText.style.color = "#fbbf24";
+    statusText.textContent =
+    value;
 
-  } else {
+    statusText.style.color =
+    "#fbbf24";
+
+  }
+
+  else{
 
     statusText.textContent =
     value || "UNKNOWN";
 
-    statusText.style.color = "#fbbf24";
+    statusText.style.color =
+    "#fbbf24";
   }
 }
 
 
-async function fetchStatus() {
+function showMessage(text,type){
 
-  try {
+  message.textContent =
+  text;
+
+  message.className =
+  "message " + type;
+}
+
+
+async function fetchStatus(){
+
+  try{
 
     const response =
     await fetch(
       WORKER_URL + "/status",
       {
-        method: "GET",
-        cache: "no-store"
+        method:"GET",
+        cache:"no-store"
       }
     );
 
     const data =
     await response.json();
 
-    if (
+    if(
       !response.ok ||
       data.ok === false
-    ) {
+    ){
 
       setStatus("UNKNOWN");
 
-      message.textContent =
-      data.error ||
-      "Status পাওয়া যাচ্ছে না";
+      showMessage(
+        data.error ||
+        "স্ট্যাটাস পাওয়া যাচ্ছে না",
+        "error"
+      );
 
       return;
     }
 
     setStatus(data.state);
 
-    message.textContent = "";
+    const state =
+    String(
+      data.state || ""
+    ).toUpperCase();
 
-  } catch (error) {
+    if(state === "RUNNING"){
+
+      showMessage(
+        "চালু হয়েছে ✓",
+        "success"
+      );
+
+    }
+
+    else if(
+      state === "SHUTDOWN" ||
+      state === "STOPPED" ||
+      state === "OFF"
+    ){
+
+      showMessage(
+        "স্টপ হয়ে গেছে ✓",
+        "success"
+      );
+
+    }
+
+    else if(state === "STARTING"){
+
+      showMessage(
+        "চালু হচ্ছে...",
+        "working"
+      );
+
+    }
+
+    else if(state === "STOPPING"){
+
+      showMessage(
+        "বন্ধ হচ্ছে...",
+        "working"
+      );
+
+    }
+
+  }
+
+  catch(error){
 
     setStatus("UNKNOWN");
 
-    message.textContent =
-    "Worker-এর সাথে সংযোগ হচ্ছে না";
+    showMessage(
+      "Worker-এর সাথে সংযোগ হচ্ছে না",
+      "error"
+    );
   }
 }
 
 
-async function control(action) {
+async function control(action){
 
-  startBtn.disabled = true;
-  stopBtn.disabled = true;
+  startBtn.disabled =
+  true;
 
-  if (action === "start") {
+  stopBtn.disabled =
+  true;
 
-    message.textContent =
-    "চালু করার অনুরোধ পাঠানো হচ্ছে...";
 
-  } else {
+  if(action === "start"){
 
-    message.textContent =
-    "বন্ধ করার অনুরোধ পাঠানো হচ্ছে...";
+    showMessage(
+      "চালু করার অনুরোধ পাঠানো হয়েছে... চালু হচ্ছে...",
+      "working"
+    );
+
+    setStatus("STARTING");
+
+  }
+
+  else{
+
+    showMessage(
+      "বন্ধ করার অনুরোধ পাঠানো হয়েছে... বন্ধ হচ্ছে...",
+      "working"
+    );
+
+    setStatus("STOPPING");
   }
 
 
-  try {
+  try{
 
     const response =
     await fetch(
       WORKER_URL + "/" + action,
       {
-        method: "POST"
+        method:"POST"
       }
     );
 
@@ -239,14 +342,16 @@ async function control(action) {
     await response.json();
 
 
-    if (
+    if(
       !response.ok ||
       data.ok === false
-    ) {
+    ){
 
-      message.textContent =
-      data.error ||
-      "কাজটি করা যায়নি";
+      showMessage(
+        data.error ||
+        "কাজটি করা যায়নি",
+        "error"
+      );
 
       await fetchStatus();
 
@@ -254,62 +359,148 @@ async function control(action) {
     }
 
 
-    if (action === "start") {
+    if(action === "start"){
 
-      message.textContent =
-      "চালু করার অনুরোধ পাঠানো হয়েছে";
+      showMessage(
+        "চালু হচ্ছে... একটু অপেক্ষা করো",
+        "working"
+      );
 
-    } else {
+    }
 
-      message.textContent =
-      "বন্ধ করার অনুরোধ পাঠানো হয়েছে";
+    else{
+
+      showMessage(
+        "বন্ধ হচ্ছে... একটু অপেক্ষা করো",
+        "working"
+      );
     }
 
 
+    /*
+      Codespace পুরোপুরি চালু/বন্ধ হওয়া
+      পর্যন্ত বারবার স্ট্যাটাস পরীক্ষা করবে।
+    */
+
+    let attempts = 0;
+
+    const check = async () => {
+
+      attempts++;
+
+      await fetchStatus();
+
+
+      const current =
+      statusText.textContent;
+
+
+      if(action === "start"){
+
+        if(current === "RUNNING"){
+
+          showMessage(
+            "চালু হয়েছে ✓",
+            "success"
+          );
+
+          startBtn.disabled =
+          false;
+
+          stopBtn.disabled =
+          false;
+
+          return;
+        }
+
+      }
+
+      else{
+
+        if(current === "STOPPED"){
+
+          showMessage(
+            "স্টপ হয়ে গেছে ✓",
+            "success"
+          );
+
+          startBtn.disabled =
+          false;
+
+          stopBtn.disabled =
+          false;
+
+          return;
+        }
+      }
+
+
+      if(attempts < 20){
+
+        setTimeout(
+          check,
+          3000
+        );
+
+      }
+
+      else{
+
+        showMessage(
+          action === "start"
+          ? "চালু হতে বেশি সময় লাগছে। আবার STATUS দেখছি..."
+          : "বন্ধ হতে বেশি সময় লাগছে। আবার STATUS দেখছি...",
+          "working"
+        );
+
+        startBtn.disabled =
+        false;
+
+        stopBtn.disabled =
+        false;
+
+        setTimeout(
+          fetchStatus,
+          5000
+        );
+      }
+    };
+
+
     setTimeout(
-      fetchStatus,
+      check,
       3000
     );
 
-    setTimeout(
-      fetchStatus,
-      7000
+  }
+
+  catch(error){
+
+    showMessage(
+      "Worker-এর সাথে সংযোগ হচ্ছে না",
+      "error"
     );
 
+    await fetchStatus();
 
-  } catch (error) {
+    startBtn.disabled =
+    false;
 
-    message.textContent =
-    "Worker-এর সাথে সংযোগ হচ্ছে না";
-
-  } finally {
-
-    setTimeout(
-      function() {
-
-        startBtn.disabled = false;
-        stopBtn.disabled = false;
-
-      },
-      5000
-    );
+    stopBtn.disabled =
+    false;
   }
 }
 
 
 startBtn.addEventListener(
   "click",
-  function() {
-    control("start");
-  }
+  () => control("start")
 );
 
 
 stopBtn.addEventListener(
   "click",
-  function() {
-    control("stop");
-  }
+  () => control("stop")
 );
 
 
